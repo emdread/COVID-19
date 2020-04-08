@@ -1,6 +1,8 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+import datetime
+
 print('test1')
 
 # use credentials to create a client to interact with the Google Drive API
@@ -12,11 +14,19 @@ client = gspread.authorize(creds)
 print('test2')
 
 # Find the workbook by name and open the first sheet
-# sheet = client.open('data').sheet1
-sheet = client.openall()
+# sheet = client.open('COVID19_data').sheet1
+
+# Finding the workbook by key, because name wasn't working
+spreadsheet = client.open_by_key('1gqXuCcGYdXkpWMrDGwFbfQjSX5pui2QrhjsDeuJkpRM')
 
 print('test3')
 
-# Extract and print all of the values
-list_of_hashes = sheet.get_all_records()
-print(list_of_hashes)
+sheet = spreadsheet.sheet1
+
+# sheet.add_cols(10)
+
+# cell = sheet.cell(2, 2)
+#
+# print(cell.value)
+
+print(sheet.acell('B1', value_render_option='FORMULA').value)
