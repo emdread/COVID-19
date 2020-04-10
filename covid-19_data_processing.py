@@ -67,24 +67,21 @@ def initialise_data(sheet, init_word):
     cats = cat_col[init_cell.row:cat_col.index('', init_cell.row)]
 
     # The datum objects already in the sheet
-    data = []
-    print(data_row)
+    data_entries = []
     for i in range(init_cell.col, len(data_row)):
-        data.append(Datum(sheets_date(data_row[i]), (init_cell.row, i + 1)))
-        print(i, sheets_date(data_row[i]), (init_cell.row, i))
+        data_entries.append(Datum(sheets_date(data_row[i]), (init_cell.row, i + 2)))
 
-    # current_cell = sheet.cell(init_cell.row, init_cell.col + 1, value_render_option='UNFORMATTED_VALUE')
-    # while current_cell.value:
-    #     days.append(Datum(sheets_date(current_cell.value), current_cell))
-    #     current_cell = sheet.cell(current_cell.row, current_cell.col + 1, value_render_option='UNFORMATTED_VALUE')
-    #
-    # for day in days:
+    # Collect the data in one API call
+    data_lists = sheet.values_batch_get()
+    print(data_lists)
+
+    # for datum in data_entries:
     #     for i in range(len(cats)):
     #         current_cell = sheet.cell(day.home_cell.row + i + 1, day.home_cell.col)
     #         cat = cats[i]
     #         day.cat = current_cell.value
     #
-    # return days
+    # return data_entries
 
 
 def collect_links(url='https://www.dhhs.vic.gov.au/media-hub-coronavirus-disease-covid-19'):
