@@ -27,6 +27,7 @@ spreadsheet = client.open_by_key('1gqXuCcGYdXkpWMrDGwFbfQjSX5pui2QrhjsDeuJkpRM')
 
 sheet = spreadsheet.sheet1
 
+
 # sheet.add_cols(10)
 
 # cell = sheet.cell(2, 2)
@@ -71,17 +72,29 @@ def initialise_data(sheet, init_word):
     for i in range(init_cell.col, len(data_row)):
         data_entries.append(Datum(sheets_date(data_row[i]), (init_cell.row, i + 2)))
 
-    # Collect the data in one API call
-    data_lists = sheet.values_batch_get()
-    print(data_lists)
+    # Collect the data in one API call, into a list of rows
 
-    # for datum in data_entries:
-    #     for i in range(len(cats)):
-    #         current_cell = sheet.cell(day.home_cell.row + i + 1, day.home_cell.col)
-    #         cat = cats[i]
-    #         day.cat = current_cell.value
-    #
-    # return data_entries
+    # A1(column_number - 1) = the corresponding letter, not really sure how it works
+    a1 = lambda n: ~int(n) and a1(int(n / 26) - 1) + chr(65 + n % 26) or ''
+    cell_range = (a1(init_cell.col) + str(init_cell.row + 1) + ':' + a1(init_cell.col + len(data_entries) - 1)
+                  + str(init_cell.row + len(cats)))
+
+    data_lists = sheet.batch_get([cell_range], major_dimension='COLUMNS', value_render_option='FORMULA')[0]
+
+    # Fill out rest of the categories for each entry
+    # Iterates through each datum, and corresponding list of values for their categories
+    # then iterates through this list of values and corresponding category name, adding these as attributes
+    for i in range(len(data_entries)):
+        datum = data_entries[i]
+        values = data_lists[i]
+        for j in range(len(values)):
+            cat = cats[j]
+            value = values[j]
+            setattr(datum, cat, value)
+            # These attributes to the Datum instances have a string (with spaces) as the key, and so cannot be called
+            #  manually. They can be viewed with getattr(data[0], 'Confirmed cases)
+
+    return data_entries
 
 
 def collect_links(url='https://www.dhhs.vic.gov.au/media-hub-coronavirus-disease-covid-19'):
