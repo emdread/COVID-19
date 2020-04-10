@@ -36,37 +36,56 @@ sheet = spreadsheet.sheet1
 # print(sheet.acell('B1', value_render_option='FORMULA').value)
 # print(sheets_date(sheet.cell(2, 2, value_render_option='UNFORMATTED_VALUE').value))
 
-class Day:
+
+class Datum:
     """The class for each data point, a day"""
 
-    def __init___(self, date, home_cell):
-        """Takes a datetime object, and a cell object."""
+    def __init__(self, ident, home_cell_coord):
+        """Takes an identifier, eg. a datetime object, and a tuple, representing the coordinates of the home cell."""
 
-        self.date = date
-        self.home_cell = home_cell
+        self.ident = ident
+        self.home_cell_coord = home_cell_coord
 
-def initialise_data(sheet):
-    """Takes a worksheet object, and collects the data into a list of Day objects."""
+
+def initialise_data(sheet, init_word):
+    """Takes a worksheet object, and the word that indicates data to be collect,
+    and collects the data into a list of Datum objects."""
+
+    # Collects data in 3 API requests
 
     # The initial cell which the data is relative to
-    init_cell = sheet.find('Day')
+    # init_word = 'Day'
+    init_cell = sheet.find(init_word)
 
-    # The categories that each day will have
-    cats = []
-    # The cell below the initial cell
-    current_cell = sheet.cell(init_cell.row + 1, init_cell.col)
-    while current_cell.value:
-        cats.append(current_cell.value)
-        current_cell = sheet.cell(current_cell.row + 1, current_cell.col)
+    # A list of the cells in the same column as the init_cell
+    cat_col = sheet.col_values(init_cell.col)
 
-    # The day objects already in the sheet
-    days = []
-    current_cell = sheet.cell(init_cell.row, init_cell.col + 1)
-    while current_cell.value:
-        days.append(Day(sheets_date(current_cell.value), current_cell))
-        current_cell = sheet.cell(current_cell.row, current_cell.col + 1)
+    # A list of the cells in the same row as the init_cell
+    data_row = sheet.row_values(init_cell.row, value_render_option='UNFORMATTED_VALUE')
 
-    return days
+    # The categories that each datum will have (from the cell after the init_cell, to the index of the first empty cell
+    cats = cat_col[init_cell.row:cat_col.index('', init_cell.row)]
+
+    # The datum objects already in the sheet
+    data = []
+    print(data_row)
+    for i in range(init_cell.col, len(data_row)):
+        data.append(Datum(sheets_date(data_row[i]), (init_cell.row, i + 1)))
+        print(i, sheets_date(data_row[i]), (init_cell.row, i))
+
+    # current_cell = sheet.cell(init_cell.row, init_cell.col + 1, value_render_option='UNFORMATTED_VALUE')
+    # while current_cell.value:
+    #     days.append(Datum(sheets_date(current_cell.value), current_cell))
+    #     current_cell = sheet.cell(current_cell.row, current_cell.col + 1, value_render_option='UNFORMATTED_VALUE')
+    #
+    # for day in days:
+    #     for i in range(len(cats)):
+    #         current_cell = sheet.cell(day.home_cell.row + i + 1, day.home_cell.col)
+    #         cat = cats[i]
+    #         day.cat = current_cell.value
+    #
+    # return days
+
 
 def collect_links(url='https://www.dhhs.vic.gov.au/media-hub-coronavirus-disease-covid-19'):
     """Takes a url string, and returns a list of all the links on that page"""

@@ -21,7 +21,7 @@ import datetime
 
 
 def sheets_date(date):
-    """Takes either an int, representing the number of days since 1/1/1900, which is how Google
+    """Takes an int, representing the number of days since 1/1/1900, which is how Google
     Sheets stores dates, and converts it to a datetime object."""
 
     return datetime.date.fromordinal(date + 693596)
