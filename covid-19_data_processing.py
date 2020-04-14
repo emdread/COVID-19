@@ -6,34 +6,36 @@ import datetime
 
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 
-# print('test1')
 
-# use credentials to create a client to interact with the Google Drive API
-scope = ['https://spreadsheets.google.com/feeds',
-         'https://www.googleapis.com/auth/drive.file']
-creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
-client = gspread.authorize(creds)
+def open_worksheet(spreadsheet_key='1gqXuCcGYdXkpWMrDGwFbfQjSX5pui2QrhjsDeuJkpRM', worksheet=None):
+    """Takes a spreadsheet key string, and a worksheet identifier, either the name as a string, the index as an int,
+    or if left blank: just uses the first worksheet. And returns a worksheet object"""
+    # use credentials to create a client to interact with the Google Drive API
+    scope = ['https://spreadsheets.google.com/feeds',
+             'https://www.googleapis.com/auth/drive.file']
+    creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
+    client = gspread.authorize(creds)
 
-# print('test2')
+    # Finding the spreadsheet by key (because name wasn't working)
+    spreadsheet = client.open_by_key(spreadsheet_key)
 
-# Find the workbook by name and open the first sheet
-# sheet = client.open('COVID19_data').sheet1
+    # Select a worksheet by index, starting from 0
+    if type(worksheet == int):
+        sheet = spreadsheet.get_worksheet(worksheet)
 
-# Finding the workbook by key, because name wasn't working
-spreadsheet = client.open_by_key('1gqXuCcGYdXkpWMrDGwFbfQjSX5pui2QrhjsDeuJkpRM')
+    # Or by title
+    elif type(worksheet == str):
+        sheet = spreadsheet.worksheet(worksheet)
 
-# print('test3')
+    # Or just open the first worksheet
+    else:
+        sheet = spreadsheet.sheet1
 
-sheet = spreadsheet.sheet1
-
+    return sheet
 
 # sheet.add_cols(10)
-
-# cell = sheet.cell(2, 2)
-#
-# print(cell.value)
-
 # print(sheet.acell('B1', value_render_option='FORMULA').value)
 # print(sheets_date(sheet.cell(2, 2, value_render_option='UNFORMATTED_VALUE').value))
 
@@ -41,10 +43,10 @@ sheet = spreadsheet.sheet1
 class Datum:
     """The class for each data point, a day"""
 
-    def __init__(self, ident, home_cell_coord):
+    def __init__(self, identifier, home_cell_coord):
         """Takes an identifier, eg. a datetime object, and a tuple, representing the coordinates of the home cell."""
 
-        self.ident = ident
+        self.identifier = identifier
         self.home_cell_coord = home_cell_coord
 
 
@@ -97,16 +99,36 @@ def initialise_data(sheet, init_word):
     return data_entries
 
 
-def collect_links(url='https://www.dhhs.vic.gov.au/media-hub-coronavirus-disease-covid-19'):
-    """Takes a url string, and returns a list of all the links on that page"""
+def media_release_links(href):
+    """Takes a href string, and returns True if it is a link to a one of the daily DHHS media releases,
+    coronavirus update, for Victoria.
+    Configured for those from https://www.dhhs.vic.gov.au/media-hub-coronavirus-disease-covid-19 from 23 March 2020."""
+
+    if href:
+        return 'coronavirus-update-victoria-' in href
+    return False
+
+
+def collect_links(url='https://www.dhhs.vic.gov.au/media-hub-coronavirus-disease-covid-19', func=media_release_links):
+    """Takes a url string, and a filter function, and returns a list of all the links as strings on that page"""
 
     # Requests the html, and parses it to be readable
     r = requests.get(url)
     r_html = r.text
     soup = BeautifulSoup(r_html, "html.parser")
 
+    # Adds an absolute url link to the link list
     link_list = []
+    for link in soup.find_all('a', href=func):
+        link_list.append(urljoin(url, link['href']))
 
-    for link in soup.find_all('a'):
-        print(link)
-        print()
+    return link_list
+
+
+def new_data(source=collect_links(), cats=cats):
+    """Takes a source of new data, eg. a list of urls, and returns a lis of the new Datum objects."""
+
+    data_list = []
+
+
+
