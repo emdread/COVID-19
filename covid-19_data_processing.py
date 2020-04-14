@@ -52,9 +52,10 @@ class Datum:
 
 def initialise_data(sheet, init_word):
     """Takes a worksheet object, and the word that indicates data to be collect,
-    and collects the data into a list of Datum objects."""
+    and collects the data into a list of Datum objects.
+    Returns a tuple of the list of data objects, and the list of categories"""
 
-    # Collects data in 3 API requests
+    # Collects data in 4 API requests
 
     # The initial cell which the data is relative to
     # init_word = 'Day'
@@ -96,7 +97,7 @@ def initialise_data(sheet, init_word):
             # These attributes to the Datum instances have a string (with spaces) as the key, and so cannot be called
             #  manually. They can be viewed with getattr(data[0], 'Confirmed cases)
 
-    return data_entries
+    return data_entries, cats
 
 
 def media_release_links(href):
@@ -125,10 +126,41 @@ def collect_links(url='https://www.dhhs.vic.gov.au/media-hub-coronavirus-disease
     return link_list
 
 
-def new_data(source=collect_links(), cats=cats):
-    """Takes a source of new data, eg. a list of urls, and returns a lis of the new Datum objects."""
+def consolidate_data(data_entries, link_list=collect_links()):
+    """Takes a list of Datum objects, which are data entries already in the spreadsheet.
+    ALso a list of url string links, to source new data from.
+    Returns a tuple of a dictionary of all the data, and just the new data, both: {identifier: Datum object}"""
 
-    data_list = []
+    data_dict = {}
+    new_data_dict = {}
+
+    # Adds the Datum objects from the spreadsheet into the data_dict
+    for data_entry in data_entries:
+        data_dict[data_entry.identifier] = data_entry
+
+    for link in link_list:
+        link_datum = Datum
 
 
+# def scrape_datum(cats, source_url):
+#     """Takes a list of categories to find the values of for this data entry,
+#     and a url string for the source webpage, and scrapes this data into a Datum object as attributes.
+#     Returns a Datum object"""
+#
+#     # Requests the html, and parses it to be readable
+#     r = requests.get(source_url)
+#     r_html = r.text
+#     soup = BeautifulSoup(r_html, "html.parser")
+#
+#
+#
+#
+# def new_data(cats, source=collect_links()):
+#     """Takes a source of new data, eg. a list of urls, and returns a list of the new Datum objects."""
+#
+#     data_list = []
+#     for page in source:
+#         data_list.append(scrape_datum(cats, source))
+#
+#     return data_list
 
